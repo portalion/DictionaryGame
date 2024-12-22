@@ -2,7 +2,6 @@ package ws
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -39,10 +38,10 @@ func NewRoom() *Room {
 }
 
 func (m *Room) setupEventHandlers() {
-	m.handlers[EventSendMessage] = func(e Event, c *User) error {
-		fmt.Println(e)
-		return nil
-	}
+	// m.handlers[UserJoinedMessage] = func(e Event, c *User) error {
+	// 	fmt.Println(e)
+	// 	return nil
+	// }
 }
 
 func (m *Room) routeEvent(event Event, c *User) error {
@@ -70,19 +69,28 @@ func (m *Room) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	go user.writeMessages(m)
 }
 
-func (m *Room) addUser(user *User) {
-	m.Lock()
-	defer m.Unlock()
+func (room *Room) addUser(user *User) {
+	room.Lock()
+	defer room.Unlock()
 
-	m.users[user] = true
+	for u := range room.users {
+		u.messageChannel <- Event{Type: UserJoinedMessage}
+	}
+	log.Println("user connected")
+	room.users[user] = true
 }
 
-func (m *Room) removeUser(user *User) {
-	m.Lock()
-	defer m.Unlock()
+func (room *Room) removeUser(user *User) {
+	room.Lock()
+	defer room.Unlock()
 
-	if _, ok := m.users[user]; ok {
+	if _, ok := room.users[user]; ok {
 		user.connection.Close()
-		delete(m.users, user)
+		delete(room.users, user)
+
+		log.Println("user disconnected")
+		for u := range room.users {
+			u.messageChannel <- Event{Type: UserDisconnectedMessage}
+	}
 	}
 }
