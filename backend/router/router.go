@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"server/room"
+	"server/ws"
 
 	"github.com/gorilla/mux"
 )
@@ -27,9 +27,9 @@ func (r *Router) SetupMiddleware() {
 	r.router.Use(jsonContentMiddleware)
 }
 
-func (r *Router) SetupRoutes() {
-	r.router.HandleFunc("/room/create", room.CreateRoomHandler).Methods(http.MethodGet)
-	r.router.HandleFunc("/room/join/{id}", nil)
+func (r *Router) SetupRoutes(rm *ws.Room) {
+	//r.router.HandleFunc("/room/create", room.CreateRoomHandler).Methods(http.MethodGet)
+	r.router.HandleFunc("/ws/room/join/{id}", rm.JoinRoom)
 }
 
 func (r *Router) Start(hostname string, port int) {
