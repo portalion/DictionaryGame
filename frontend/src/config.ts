@@ -1,1 +1,1 @@
-export const hostname = "localhost:8080"
+export const hostname = 'localhost:8080';

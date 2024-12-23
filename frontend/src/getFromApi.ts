@@ -1,4 +1,4 @@
-import { hostname } from "./config";
+import { hostname } from './config';
 
 export default async function getFromApi<T>(path: string): Promise<T> {
     const response = await fetch(`http://${hostname}/${path}`);
@@ -7,5 +7,5 @@ export default async function getFromApi<T>(path: string): Promise<T> {
         throw new Error(response.statusText);
     }
 
-    return await response.json() as T;
+    return (await response.json()) as T;
 }
