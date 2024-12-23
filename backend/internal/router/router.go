@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"server/ws"
+	"server/internal/ws"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -33,7 +33,7 @@ func (r *Router) SetupMiddleware() {
 	r.router.Use(jsonContentMiddleware)
 }
 
-func joinRoomHandler(rm *ws.Room, w http.ResponseWriter, r *http.Request) {
+func joinRoomHandler(rm *ws.RoomManager, w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("username")
 
 	if username == "" {
@@ -47,10 +47,10 @@ func joinRoomHandler(rm *ws.Room, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rm.JoinRoom(username, conn)
+	rm.Connect <- conn
 }
 
-func (r *Router) SetupRoutes(rm *ws.Room) {
+func (r *Router) SetupRoutes(rm *ws.RoomManager) {
 	//r.router.HandleFunc("/room/create", room.CreateRoomHandler).Methods(http.MethodGet)
 	r.router.HandleFunc("/ws/room/join/{id}", func(w http.ResponseWriter, r *http.Request) {joinRoomHandler(rm, w, r)})
 }
