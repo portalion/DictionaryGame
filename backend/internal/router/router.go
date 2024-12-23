@@ -17,14 +17,17 @@ var	websocketUpgrader = websocket.Upgrader{
 	}
 type Router struct{
 	router *mux.Router
+
+	hub *ws.RoomHub
 }
 
-func NewRouter() *Router{
+func NewRouter(hub *ws.RoomHub) *Router{
 	muxRouter := mux.NewRouter()
 	muxRouter.Use()
 
 	return &Router{
 		router: muxRouter,
+		hub: hub,
 	}
 }
 
@@ -33,26 +36,9 @@ func (r *Router) SetupMiddleware() {
 	r.router.Use(jsonContentMiddleware)
 }
 
-func joinRoomHandler(rm *ws.RoomManager, w http.ResponseWriter, r *http.Request) {
-	username := r.URL.Query().Get("username")
-
-	if username == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	conn, err := websocketUpgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	rm.Connect <- conn
-}
-
-func (r *Router) SetupRoutes(rm *ws.RoomManager) {
-	//r.router.HandleFunc("/room/create", room.CreateRoomHandler).Methods(http.MethodGet)
-	r.router.HandleFunc("/ws/room/join/{id}", func(w http.ResponseWriter, r *http.Request) {joinRoomHandler(rm, w, r)})
+func (r *Router) SetupRoutes() {
+	r.router.HandleFunc("/room/create", r.createRoomHandler).Methods(http.MethodPost)
+	r.router.HandleFunc("/ws/room/{code}/join", r.joinRoomHandler)
 }
 
 func (r *Router) Start(hostname string, port int) {

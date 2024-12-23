@@ -35,10 +35,8 @@ func (rm *RoomManager) run() {
 	for {
 		select {
 		case wsConnection := <-rm.Connect:
-			log.Println("Wanted connection")
 			rm.addClient(wsConnection)
 		case client := <-rm.Disconnect:
-			log.Println("Wanted disconnection")
 			rm.removeClient(client)
 		case message := <-rm.IncommingMessage:
 			log.Println(message.Type)

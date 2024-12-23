@@ -10,10 +10,11 @@ class Event
 
 function Room(props: {currentRoomId: string, setCurrentRoomId: React.Dispatch<React.SetStateAction<string>>, username: string})
 {
-    const wsUrl = `ws://${hostname}/ws/room/join/${props.currentRoomId}?username=${props.username}`
+    const wsUrl = `ws://${hostname}/ws/room/${props.currentRoomId}/join?username=${props.username}`
     const { lastJsonMessage } = useWebSocket(wsUrl, { share: true,  
-        onOpen: () => console.log(`connect `),
-		onClose: () => console.log(`disconnect `) });
+        onOpen: () => console.log(`connect`),
+		onClose: () => {props.setCurrentRoomId(""); console.log(`disconnect`)},
+        onError: () => props.setCurrentRoomId("") });
     const [users, setUsers] = useState<string[]>([props.username]);
 
     useEffect(() =>
@@ -31,6 +32,7 @@ function Room(props: {currentRoomId: string, setCurrentRoomId: React.Dispatch<Re
 
     return (
     <div>
+        Code: {props.currentRoomId}
         <button onClick={() => {
             props.setCurrentRoomId("")
             }}>Disconnect</button>

@@ -3,8 +3,9 @@ import { hostname } from "../config";
 
 async function CreateRoom(setCurrentRoomId: React.Dispatch<React.SetStateAction<string>>) {
     const response = await fetch(`http://${hostname}/room/create`, {method: "POST"})
-    const data = await response.json() as string;
-    setCurrentRoomId(data)
+    const data = await response.json() as {code: string};
+    console.log(data)
+    setCurrentRoomId(data.code)
 }
 
 function RoomSelector(props: {setCurrentRoomId: React.Dispatch<React.SetStateAction<string>>, setUsername: React.Dispatch<React.SetStateAction<string>> })
@@ -22,7 +23,7 @@ function RoomSelector(props: {setCurrentRoomId: React.Dispatch<React.SetStateAct
                 props.setUsername(username)
             }}>Join room</button>
         </div>
-        <button onClick={() => CreateRoom(props.setCurrentRoomId)}>Create room</button>
+        <button onClick={() => {props.setUsername(username); CreateRoom(props.setCurrentRoomId)}}>Create room</button>
     </div>);
 }
 

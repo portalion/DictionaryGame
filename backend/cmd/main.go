@@ -9,10 +9,10 @@ func main(){
     const host = "localhost"
     const port = 8080
 
-    roomManager := ws.NewRoomManager()
+    hub := ws.NewRoomHub()
 
-    currentRouter := router.NewRouter()
+    currentRouter := router.NewRouter(hub)
     currentRouter.SetupMiddleware()
-    currentRouter.SetupRoutes(roomManager)
+    currentRouter.SetupRoutes()
     currentRouter.Start(host, port)
 }
