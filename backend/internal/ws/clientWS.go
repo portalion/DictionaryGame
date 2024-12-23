@@ -8,11 +8,15 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+func (client *Client) dispatchMessage(message Event, incomingMessageHandler chan RoomManagerClientMessage) {
+	incomingMessageHandler <- RoomManagerClientMessage{request: message, sender: client}
+}
+
 func (client *Client) pongHandler(pongMessage string) error {
 	return client.connection.SetReadDeadline(time.Now().Add(pongWait))
 }
 
-func (client *Client) handleReading(disconnect chan *Client, incomingMessageHandler chan Event) {
+func (client *Client) handleReading(disconnect chan *Client, incomingMessageHandler chan RoomManagerClientMessage) {
 	defer func() {
 		disconnect <- client
 	}()
@@ -28,7 +32,7 @@ func (client *Client) handleReading(disconnect chan *Client, incomingMessageHand
 		_, payload, err := client.connection.ReadMessage()
 
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNoStatusReceived, websocket.CloseNormalClosure) {
 				log.Printf("error reading message: %v", err)
 			}
 			break
@@ -40,7 +44,7 @@ func (client *Client) handleReading(disconnect chan *Client, incomingMessageHand
 			break
 		}
 
-		incomingMessageHandler <- request
+		client.dispatchMessage(request, incomingMessageHandler)
 	}
 }
 
@@ -72,7 +76,6 @@ func (client *Client) handleWriting(disconnect chan *Client) {
 			}
 		case <-ticker.C:
 			if err := client.connection.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-				log.Println("writemsg: ", err)
 				return
 			}
 		}

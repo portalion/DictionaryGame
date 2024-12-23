@@ -2,26 +2,28 @@ package ws
 
 import (
 	"log"
-	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
+type RoomManagerClientMessage struct {
+	request Event
+	sender *Client
+}
+
 type RoomManager struct {
 	Disconnect       chan *Client
 	Connect          chan *websocket.Conn
-	IncommingMessage chan Event
+	IncommingMessage chan RoomManagerClientMessage
 
 	Clients map[*Client] bool
-
-	sync.RWMutex
 }
 
 func NewRoomManager() *RoomManager {
 	result := &RoomManager{
 		Disconnect: make(chan *Client),
 		Connect: make(chan *websocket.Conn),
-		IncommingMessage: make(chan Event, 8),
+		IncommingMessage: make(chan RoomManagerClientMessage, 8),
 
 		Clients: make(map[*Client]bool),
 	}
@@ -39,15 +41,18 @@ func (rm *RoomManager) run() {
 		case client := <-rm.Disconnect:
 			rm.removeClient(client)
 		case message := <-rm.IncommingMessage:
-			log.Println(message.Type)
+			log.Println(message.request.Type)
 		}
 	}
 }
 
-func (rm *RoomManager) removeClient(client *Client) {
-	rm.Lock()
-	defer rm.Unlock()
+func (rm *RoomManager) broadcast(event Event) {
+	for client := range rm.Clients{
+		client.SendEvent(event)
+	}
+}
 
+func (rm *RoomManager) removeClient(client *Client) {
 	if _, ok := rm.Clients[client]; ok {
 		client.connection.Close()
 		delete(rm.Clients, client)
@@ -57,9 +62,8 @@ func (rm *RoomManager) removeClient(client *Client) {
 }
 
 func (rm *RoomManager) addClient(connection *websocket.Conn) {
-	rm.Lock()
-	defer rm.Unlock()
-
 	client := NewClient(connection, rm.Disconnect, rm.IncommingMessage)
 	rm.Clients[client] = true
+
+	log.Println("Client connected")
 }

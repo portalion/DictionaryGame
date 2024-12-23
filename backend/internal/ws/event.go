@@ -10,4 +10,5 @@ type Event struct {
 const (
 	UserJoinedMessage = "user_joined"
 	UserDisconnectedMessage = "user_disconnected"
+	RoomStateRequest = "room_state_requested"
 )

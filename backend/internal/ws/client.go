@@ -13,11 +13,10 @@ var (
 
 type Client struct {
 	connection *websocket.Conn
-
 	writeMessageChannel chan Event
 }
 
-func NewClient(connection *websocket.Conn, disconnectChannel chan *Client, incomingMessageHandler chan Event) *Client {
+func NewClient(connection *websocket.Conn, disconnectChannel chan *Client, incomingMessageHandler chan RoomManagerClientMessage) *Client {
 	result := &Client{
 		connection: connection,
 		writeMessageChannel: make(chan Event),
