@@ -4,13 +4,14 @@ import Room from "./components/Room";
 
 function App()
 {
-  const [currentRoomId, setCurrentRoomId] = useState<string>("");
+  const [currentRoomId, setCurrentRoomId] = useState("");
+  const [username, setUsername] = useState("");
 
   return (
     <>
         { !currentRoomId 
-          ? <RoomSelector setCurrentRoomId={setCurrentRoomId}/> 
-          : <Room currentRoomId={currentRoomId} setCurrentRoomId={setCurrentRoomId}/>
+          ? <RoomSelector setCurrentRoomId={setCurrentRoomId} setUsername={setUsername}/> 
+          : <Room currentRoomId={currentRoomId} setCurrentRoomId={setCurrentRoomId} username={username}/>
         }
     </>
   );

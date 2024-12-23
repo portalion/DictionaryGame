@@ -19,12 +19,14 @@ type User struct {
 	connection *websocket.Conn
 
 	messageChannel chan Event
+	username string
 }
 
-func NewUser(connection *websocket.Conn) *User {
+func NewUser(connection *websocket.Conn, username string) *User {
 	return &User{
 		connection: connection,
 		messageChannel: make(chan Event),
+		username: username,
 	}
 }
 

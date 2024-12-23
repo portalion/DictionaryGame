@@ -1,20 +1,16 @@
 package ws
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
-	"net/http"
 	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
 var (
-	websocketUpgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {return true},
-	}
+
 
 	ErrEventNotSupported = errors.New("this event type is not supported")
 )
@@ -55,14 +51,8 @@ func (m *Room) routeEvent(event Event, c *User) error {
 	}
 }
 
-func (m *Room) JoinRoom(w http.ResponseWriter, r *http.Request) {
-	conn, err := websocketUpgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	user := NewUser(conn)
+func (m *Room) JoinRoom(username string, conn *websocket.Conn) {
+	user := NewUser(conn, username)
 	m.addUser(user)
 
 	go user.readMessages(m)
@@ -72,9 +62,16 @@ func (m *Room) JoinRoom(w http.ResponseWriter, r *http.Request) {
 func (room *Room) addUser(user *User) {
 	room.Lock()
 	defer room.Unlock()
+	
+	data, err := json.Marshal(user.username)
+	if err != nil {
+		log.Println(err)
+		user.connection.Close()
+		return
+	}
 
 	for u := range room.users {
-		u.messageChannel <- Event{Type: UserJoinedMessage}
+		u.messageChannel <- Event{Type: UserJoinedMessage, Payload: data}
 	}
 	log.Println("user connected")
 	room.users[user] = true
@@ -88,9 +85,13 @@ func (room *Room) removeUser(user *User) {
 		user.connection.Close()
 		delete(room.users, user)
 
+		data, err := json.Marshal(user.username)
+		if err != nil {
+		}
+
 		log.Println("user disconnected")
 		for u := range room.users {
-			u.messageChannel <- Event{Type: UserDisconnectedMessage}
+			u.messageChannel <- Event{Type: UserDisconnectedMessage, Payload: data}
 	}
 	}
 }
