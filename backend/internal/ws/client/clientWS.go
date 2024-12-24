@@ -1,4 +1,4 @@
-package ws
+package client
 
 import (
 	"encoding/json"
@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+
+	. "server/internal/ws/event"
 )
 
 func (client *Client) dispatchMessage(message Event, incomingMessageHandler chan RoomManagerClientMessage) {
-	incomingMessageHandler <- RoomManagerClientMessage{request: message, sender: client}
+	incomingMessageHandler <- RoomManagerClientMessage{Request: message, Sender: client}
 }
 
 func (client *Client) pongHandler(pongMessage string) error {

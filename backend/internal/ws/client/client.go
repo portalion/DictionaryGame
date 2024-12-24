@@ -1,6 +1,7 @@
-package ws
+package client
 
 import (
+	. "server/internal/ws/event"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -10,6 +11,11 @@ var (
 	pongWait = 10 * time.Second
 	pingInterval = (pongWait * 9) / 10
 )
+
+type RoomManagerClientMessage struct {
+	Request Event
+	Sender *Client
+}
 
 type Client struct {
 	connection *websocket.Conn
@@ -30,4 +36,8 @@ func NewClient(connection *websocket.Conn, disconnectChannel chan *Client, incom
 
 func (client *Client) SendEvent(event Event) {
 	client.writeMessageChannel <- event
+}
+
+func (client *Client) CloseConnection() {
+	client.connection.Close()
 }

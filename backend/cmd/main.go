@@ -2,14 +2,14 @@ package main
 
 import (
 	"server/internal/router"
-	"server/internal/ws"
+	"server/internal/ws/room"
 )
 
 func main(){
     const host = "localhost"
     const port = 8080
 
-    hub := ws.NewRoomHub()
+    hub := room.NewRoomHub()
 
     currentRouter := router.NewRouter(hub)
     currentRouter.SetupMiddleware()

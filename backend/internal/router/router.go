@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"server/internal/ws"
+	"server/internal/ws/room"
 
 	"github.com/gorilla/mux"
 )
 type Router struct{
 	router *mux.Router
 
-	hub *ws.RoomHub
+	hub *room.RoomHub
 }
 
-func NewRouter(hub *ws.RoomHub) *Router{
+func NewRouter(hub *room.RoomHub) *Router{
 	muxRouter := mux.NewRouter()
 	muxRouter.Use()
 

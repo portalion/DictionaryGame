@@ -1,4 +1,4 @@
-package ws
+package room
 
 import (
 	"errors"
@@ -40,7 +40,7 @@ func (rh *RoomHub) CreateRoom() string {
 	return code
 }
 
-func (rh *RoomHub) JoinRoom(w http.ResponseWriter, r *http.Request, code string) error {
+func (rh *RoomHub) JoinRoom(w http.ResponseWriter, r *http.Request, code string, username string) error {
 	if _, ok := rh.Rooms[code]; !ok {
 		return errors.New("room with that code doesn't exist")
 	}
@@ -50,6 +50,11 @@ func (rh *RoomHub) JoinRoom(w http.ResponseWriter, r *http.Request, code string)
 		return err
 	}
 
-	rh.Rooms[code].Connect <- conn
+	data := WantsConnectionData{
+		WsConnection: conn,
+		Username: username,
+	}
+
+	rh.Rooms[code].Connect <- data
 	return nil
 }

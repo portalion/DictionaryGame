@@ -35,7 +35,7 @@ func (router *Router) joinRoomHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := router.hub.JoinRoom(w, r, code)
+	err := router.hub.JoinRoom(w, r, code, username)
 
 	if err != nil {
 		http.Error(w, "Failed to join the room", http.StatusNotFound)

@@ -4,7 +4,7 @@ import useWebSocket from 'react-use-websocket';
 
 class Event {
   type: string = '';
-  payload: string = '';
+  payload: unknown;
 }
 
 function Room(props: {
@@ -13,9 +13,14 @@ function Room(props: {
   username: string;
 }) {
   const wsUrl = `ws://${hostname}/ws/room/${props.currentRoomId}/join?username=${props.username}`;
-  const { lastJsonMessage } = useWebSocket(wsUrl, {
+  const { lastJsonMessage, sendJsonMessage } = useWebSocket(wsUrl, {
     share: true,
-    onOpen: () => console.log(`connect`),
+    onOpen: () => {
+      console.log(`connect`);
+      const message = new Event();
+      message.type = 'room_state_requested';
+      sendJsonMessage(message);
+    },
     onClose: () => {
       props.setCurrentRoomId('');
       console.log(`disconnect`);
@@ -28,9 +33,12 @@ function Room(props: {
     if (lastJsonMessage !== null) {
       const message = lastJsonMessage as Event;
       console.log(message);
-      if (message.type === 'user_joined') setUsers(users.concat(message.payload));
+      if (message.type === 'user_joined')
+        setUsers(users.concat((message.payload as { username: string }).username));
       else if (message.type === 'user_disconnected')
-        setUsers(users.filter(v => v != message.payload));
+        setUsers(users.filter(v => v != (message.payload as { username: string }).username));
+      else if (message.type === 'room_state')
+        setUsers((message.payload as { users: string[] }).users);
     }
   }, [lastJsonMessage]);
 

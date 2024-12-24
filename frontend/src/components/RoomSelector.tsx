@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { hostname } from '../config';
 
 async function CreateRoom(setCurrentRoomId: React.Dispatch<React.SetStateAction<string>>) {
