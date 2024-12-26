@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// POST '/room/create'
 func (router *Router) createRoomHandler(w http.ResponseWriter, r *http.Request) {
 	roomCode := router.hub.CreateRoom()
 
@@ -20,6 +21,7 @@ func (router *Router) createRoomHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// WS '/ws/room/{code}/join?username'
 func (router *Router) joinRoomHandler(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("username")
 	if username == "" {

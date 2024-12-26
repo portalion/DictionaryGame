@@ -3,6 +3,7 @@ package room
 import (
 	. "server/internal/ws/client"
 	. "server/internal/ws/event"
+	"server/internal/ws/state"
 	"server/internal/ws/user"
 
 	"log"
@@ -21,6 +22,7 @@ type RoomManager struct {
 	IncommingMessage chan RoomManagerClientMessage
 
 	Clients map[*Client] *user.User
+	State state.State
 }
 
 func NewRoomManager() *RoomManager {
@@ -30,6 +32,7 @@ func NewRoomManager() *RoomManager {
 		IncommingMessage: make(chan RoomManagerClientMessage, 8),
 
 		Clients: make(map[*Client] *user.User),
+		State: &state.RoomState{},
 	}
 
 	go result.run()
@@ -37,29 +40,32 @@ func NewRoomManager() *RoomManager {
 	return result
 }
 
+func (rm *RoomManager) ChangeState(state state.State) {
+	rm.State = state
+}
+
 func (rm *RoomManager) run() {
 	for {
 		select {
 		case wsConnectionData := <-rm.Connect:
-			rm.addClient(wsConnectionData.WsConnection, wsConnectionData.Username)
+			user := rm.addClient(wsConnectionData.WsConnection, wsConnectionData.Username)
+			rm.State.OnUserConnection(user)
 		case client := <-rm.Disconnect:
-			rm.removeClient(client)
+			user := rm.removeClient(client)
+			if user != nil {
+				rm.State.OnUserDisconnection(user)
+			}
 		case message := <-rm.IncommingMessage:
-			switch message.Request.Type {
-			case RoomStateRequested:
-				responsePayload := RoomStateEvent{Users: make([]string, len(rm.Clients))}
-				i := 0
-				for _, user := range rm.Clients {
-					responsePayload.Users[i] = user.Username ; i++
-				}
+			err := rm.State.ProcessMessage(
+				state.ServerStateMessage{
+					Sender: rm.Clients[message.Sender],
+					Event: message.Request},
+				rm.broadcast,
+				rm.ChangeState)
 
-				event, err := CreateEvent(RoomState, responsePayload)
-				if err != nil {
-					log.Println(err)
-					continue
-				}
-
-				message.Sender.SendEvent(event)
+			if err != nil {
+				log.Println(err)
+				continue
 			}
 		}
 	}
@@ -71,7 +77,7 @@ func (rm *RoomManager) broadcast(event Event) {
 	}
 }
 
-func (rm *RoomManager) removeClient(client *Client) {
+func (rm *RoomManager) removeClient(client *Client) *user.User{
 	if userData, ok := rm.Clients[client]; ok {
 		client.CloseConnection()
 		delete(rm.Clients, client)
@@ -84,10 +90,12 @@ func (rm *RoomManager) removeClient(client *Client) {
 
 		rm.broadcast(event)
 		log.Println("Client disconnected")
+		return userData
 	}
+	return nil
 }
 
-func (rm *RoomManager) addClient(connection *websocket.Conn, username string) {
+func (rm *RoomManager) addClient(connection *websocket.Conn, username string) *user.User{
 	client := NewClient(connection, rm.Disconnect, rm.IncommingMessage)
 
 	event, err := CreateEvent(UserJoinedMessage, 
@@ -100,4 +108,6 @@ func (rm *RoomManager) addClient(connection *websocket.Conn, username string) {
 	rm.Clients[client] = user.NewUser(username, client)
 
 	log.Println("Client connected")
+	return rm.Clients[client]
 }
+
