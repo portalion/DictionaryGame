@@ -80,7 +80,7 @@ func (rm *RoomManager) removeClient(client *client.Client) *user.User{
 		client.CloseConnection()
 		delete(rm.Clients, client)
 
-		event, err := event.CreateEvent(event.UserJoinedMessage, 
+		event, err := event.CreateEvent(event.UserDisconnectedMessage, 
 			event.UserRelatedMessage{Username: userData.Username,})
 		if err != nil {
 			log.Println(err)

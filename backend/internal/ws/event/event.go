@@ -14,6 +14,7 @@ const (
 	UserDisconnectedMessage = "user_disconnected"
 	RoomStateRequested = "room_state_requested"
 	RoomState = "room_state"
+	StartGame = "game_start"
 )
 
 type RoomStateEvent struct{

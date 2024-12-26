@@ -1,20 +1,21 @@
 import { useState } from 'react';
 import { hostname } from '../config';
+import { GlobalData, GlobalStateAction } from '../App.types';
 
-async function CreateRoom(setCurrentRoomId: React.Dispatch<React.SetStateAction<string>>) {
+type RoomSelectorProps = {
+  dispatch: React.Dispatch<GlobalStateAction>;
+  globalState: GlobalData;
+};
+
+async function CreateRoom(): Promise<string> {
   const response = await fetch(`http://${hostname}/room/create`, { method: 'POST' });
   const data = (await response.json()) as { code: string };
-  console.log(data);
-  setCurrentRoomId(data.code);
+  return data.code;
 }
 
-function RoomSelector(props: {
-  username: string;
-  setCurrentRoomId: React.Dispatch<React.SetStateAction<string>>;
-  setUsername: React.Dispatch<React.SetStateAction<string>>;
-}) {
+function RoomSelector({ dispatch, globalState }: RoomSelectorProps) {
   const [roomIdText, setRoomIdText] = useState('');
-  const [username, setUsername] = useState(props.username);
+  const [username, setUsername] = useState(globalState.username);
 
   return (
     <div>
@@ -36,16 +37,20 @@ function RoomSelector(props: {
         />
         <button
           onClick={() => {
-            props.setCurrentRoomId(roomIdText);
-            props.setUsername(username);
+            dispatch({
+              type: 'ChangeGlobalData',
+              newData: { username: username, currentRoomId: roomIdText },
+            });
           }}>
           Join room
         </button>
       </div>
       <button
-        onClick={() => {
-          props.setUsername(username);
-          CreateRoom(props.setCurrentRoomId);
+        onClick={async () => {
+          dispatch({
+            type: 'ChangeGlobalData',
+            newData: { username: username, currentRoomId: await CreateRoom() },
+          });
         }}>
         Create room
       </button>

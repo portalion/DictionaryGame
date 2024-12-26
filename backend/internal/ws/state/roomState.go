@@ -28,7 +28,7 @@ func (rs *RoomState) OnUserConnection(user *user.User) {
 
 func (rs *RoomState) OnUserDisconnection(user *user.User) {
 	i := slices.Index(rs.Users, user)
-	rs.Users = slices.Delete(rs.Users, i, i)
+	rs.Users = slices.Delete(rs.Users, i, i + 1)
 }
 
 func (rs *RoomState) handleStateRequestedEvent(sender *user.User) error {
@@ -45,10 +45,18 @@ func (rs *RoomState) handleStateRequestedEvent(sender *user.User) error {
 	return nil
 }
 
+func (rs *RoomState) handleGameStart() {
+	gameState := NewGameState(rs.Users, rs.broadcast, rs.swapState)
+	rs.swapState(gameState)
+	gameState.Start()
+}
+
 func (rs *RoomState) ProcessMessage(message ServerStateMessage) error {
 	switch message.Event.Type {
 	case event.RoomStateRequested:
 		return rs.handleStateRequestedEvent(message.Sender)
+	case event.StartGame:
+		rs.handleGameStart()
 	}
 
 	log.Printf("Got message from %s\n", message.Sender.Username)
