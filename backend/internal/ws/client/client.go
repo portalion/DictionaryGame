@@ -1,7 +1,7 @@
 package client
 
 import (
-	. "server/internal/ws/event"
+	"server/internal/ws/event"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -13,19 +13,19 @@ var (
 )
 
 type RoomManagerClientMessage struct {
-	Request Event
+	Request event.Event
 	Sender *Client
 }
 
 type Client struct {
 	connection *websocket.Conn
-	writeMessageChannel chan Event
+	writeMessageChannel chan event.Event
 }
 
 func NewClient(connection *websocket.Conn, disconnectChannel chan *Client, incomingMessageHandler chan RoomManagerClientMessage) *Client {
 	result := &Client{
 		connection: connection,
-		writeMessageChannel: make(chan Event),
+		writeMessageChannel: make(chan event.Event),
 	}
 
 	go result.handleWriting(disconnectChannel)
@@ -34,7 +34,7 @@ func NewClient(connection *websocket.Conn, disconnectChannel chan *Client, incom
 	return result
 }
 
-func (client *Client) SendEvent(event Event) {
+func (client *Client) SendEvent(event event.Event) {
 	client.writeMessageChannel <- event
 }
 

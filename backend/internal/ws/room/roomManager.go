@@ -1,8 +1,8 @@
 package room
 
 import (
-	. "server/internal/ws/client"
-	. "server/internal/ws/event"
+	"server/internal/ws/client"
+	"server/internal/ws/event"
 	"server/internal/ws/state"
 	"server/internal/ws/user"
 
@@ -17,24 +17,24 @@ type WantsConnectionData struct {
 }
 
 type RoomManager struct {
-	Disconnect       chan *Client
+	Disconnect       chan *client.Client
 	Connect          chan WantsConnectionData
-	IncommingMessage chan RoomManagerClientMessage
+	IncommingMessage chan client.RoomManagerClientMessage
 
-	Clients map[*Client] *user.User
+	Clients map[*client.Client] *user.User
 	State state.State
 }
 
 func NewRoomManager() *RoomManager {
 	result := &RoomManager{
-		Disconnect: make(chan *Client),
+		Disconnect: make(chan *client.Client),
 		Connect: make(chan WantsConnectionData),
-		IncommingMessage: make(chan RoomManagerClientMessage, 8),
+		IncommingMessage: make(chan client.RoomManagerClientMessage, 8),
 
-		Clients: make(map[*Client] *user.User),
-		State: &state.RoomState{},
+		Clients: make(map[*client.Client] *user.User),
 	}
 
+	result.State = state.NewRoomState(make([]*user.User, 0), result.broadcast, result.ChangeState)
 	go result.run()
 	
 	return result
@@ -59,9 +59,7 @@ func (rm *RoomManager) run() {
 			err := rm.State.ProcessMessage(
 				state.ServerStateMessage{
 					Sender: rm.Clients[message.Sender],
-					Event: message.Request},
-				rm.broadcast,
-				rm.ChangeState)
+					Event: message.Request})
 
 			if err != nil {
 				log.Println(err)
@@ -71,19 +69,19 @@ func (rm *RoomManager) run() {
 	}
 }
 
-func (rm *RoomManager) broadcast(event Event) {
+func (rm *RoomManager) broadcast(event event.Event) {
 	for client := range rm.Clients{
 		client.SendEvent(event)
 	}
 }
 
-func (rm *RoomManager) removeClient(client *Client) *user.User{
+func (rm *RoomManager) removeClient(client *client.Client) *user.User{
 	if userData, ok := rm.Clients[client]; ok {
 		client.CloseConnection()
 		delete(rm.Clients, client)
 
-		event, err := CreateEvent(UserJoinedMessage, 
-			UserRelatedMessage{Username: userData.Username,})
+		event, err := event.CreateEvent(event.UserJoinedMessage, 
+			event.UserRelatedMessage{Username: userData.Username,})
 		if err != nil {
 			log.Println(err)
 		}
@@ -96,10 +94,10 @@ func (rm *RoomManager) removeClient(client *Client) *user.User{
 }
 
 func (rm *RoomManager) addClient(connection *websocket.Conn, username string) *user.User{
-	client := NewClient(connection, rm.Disconnect, rm.IncommingMessage)
+	client := client.NewClient(connection, rm.Disconnect, rm.IncommingMessage)
 
-	event, err := CreateEvent(UserJoinedMessage, 
-		UserRelatedMessage{Username: username,})
+	event, err := event.CreateEvent(event.UserJoinedMessage, 
+		event.UserRelatedMessage{Username: username,})
 	if err != nil {
 		log.Println(err)
 	}

@@ -7,10 +7,10 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	. "server/internal/ws/event"
+	"server/internal/ws/event"
 )
 
-func (client *Client) dispatchMessage(message Event, incomingMessageHandler chan RoomManagerClientMessage) {
+func (client *Client) dispatchMessage(message event.Event, incomingMessageHandler chan RoomManagerClientMessage) {
 	incomingMessageHandler <- RoomManagerClientMessage{Request: message, Sender: client}
 }
 
@@ -40,7 +40,7 @@ func (client *Client) handleReading(disconnect chan *Client, incomingMessageHand
 			break
 		}
 
-		var request Event
+		var request event.Event
 		if err := json.Unmarshal(payload, &request); err != nil {
 			log.Printf("error marshalling message: %v", err)
 			break

@@ -13,5 +13,5 @@ type ServerStateMessage struct {
 type State interface {
 	OnUserConnection(*user.User)
 	OnUserDisconnection(*user.User)
-	ProcessMessage(message ServerStateMessage, broadcast func (event.Event), swapState func(State)) error
+	ProcessMessage(message ServerStateMessage) error
 }
